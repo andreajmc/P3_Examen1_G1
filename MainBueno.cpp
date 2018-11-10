@@ -7,7 +7,7 @@ using std::string;
 using namespace std;
 
 Item*** crearTablero();
-bool lvlOne(char*, int, Item***, WINDOW*);
+void lvlOne(char*, int, Item***, WINDOW*);
 bool lvlTwo(char*, int, Item***, WINDOW*);
 bool lvlThree(char*, int, Item***, WINDOW*);
 void finale(bool, char*, WINDOW*);
@@ -15,6 +15,7 @@ void imprimir(Item*** x);
 void createGame(WINDOW*);
 void createBarrita(WINDOW*, int, int, int);
 void moveBarrita(WINDOW*, int, int, int);
+void createBall(WINDOW*, int, int, int);
 
 int main() {
     int x = 0;
@@ -24,17 +25,19 @@ int main() {
     char name[20] = {""};
     int vidas = 3;
     initscr();
-    echo();
+    noecho();
     curs_set(FALSE);
     WINDOW* menuwin = newwin(8, 20, xMax / 2, yMax / 2); // height, width, starty, start
     box(menuwin, 0, 0); // windows, characters
     keypad(menuwin, true);
     start_color();
-    string w = "¡Bienvenido!";
+    string w = "¡Bienvenido! ";
     string n = "Ingresa tu nombre: ";
     printw(w.c_str());
     printw(n.c_str());
+    echo();
     getstr(name); // Guardamos nombre.
+    noecho();
     if (name != "") {
         clear();
         refresh();
@@ -81,22 +84,24 @@ int main() {
         bool win = false;
         switch(S) {
             case 0:
-                createGame(stdscr);
                 while (!win) {
-                    win = lvlOne(name, vidas, Board, stdscr);
+                    createGame(stdscr);
+                    lvlOne(name, vidas, Board, stdscr);
+                    clear();
                 }
-                finale(win, name, stdscr);
-                getch();
+                //finale(win, name, stdscr);
                 break;
             case 1:
                 createGame(stdscr);
                 win = lvlTwo(name, vidas, Board, stdscr);
                 finale(win, name, stdscr);
+                getch();
                 break;
             case 2:
                 createGame(stdscr);
                 win = lvlThree(name, vidas, Board, stdscr);
                 finale(win, name, stdscr);
+                getch();
                 break;
             case 3:
                 break;
@@ -105,7 +110,6 @@ int main() {
     refresh();
     wrefresh(menuwin);
     delwin(menuwin);
-    getch();
     endwin();
 }
 
@@ -211,30 +215,35 @@ void createGame(WINDOW* game) {
      }
 }
 
-bool lvlOne(char* name, int vidas, Item*** Board, WINDOW* game) {
+void lvlOne(char* name, int vidas, Item*** Board, WINDOW* game) {
     int maxX = 0;
     int maxY = 0;
     getmaxyx(game, maxY, maxX);
     int right = maxX/2-6;
     int left = maxX/2+6;
-    createBarrita(game,maxX/2-6, maxX/2 + 6, maxY);
     while(1) {
+    createBarrita(game,right, left, maxY);
+    createBall(game, right, left, maxY);
         if (getch() == 'A' || getch() == 'a') {
             --right;
             moveBarrita(game,right,left, 1);
         } else if (getch() == 'D' || getch() == 'd') {
             ++left;
-            moveBarrita(game,right,left, 1);
+            moveBarrita(game,right,left, 2);
         }
     }
-    return true;
+        refresh();
 }
 
 bool lvlTwo(char* name, int vidas, Item*** Board, WINDOW* game) {
     int maxX = 0;
     int maxY = 0;
     getmaxyx(game, maxY, maxX);
-    createBarrita(game,maxX/2-4, maxX/2 + 4, maxY);
+    int right = maxX/2-4;
+    int left = maxX/2+4;
+    createBarrita(game,right, left, maxY);
+    createBall(game, right, left, maxY);
+    getch();
     return false;
 }
 
@@ -242,20 +251,29 @@ bool lvlThree(char* name, int vidas, Item*** Board, WINDOW* game) {
     int maxX = 0;
     int maxY = 0;
     getmaxyx(game, maxY, maxX);
-    createBarrita(game,maxX/2-2, maxX/2 + 2, maxY);
+    int right = maxX/2-2;
+    int left = maxX/2+2;
+
+    getmaxyx(game, maxY, maxX);
+    createBarrita(game,right, left, maxY);
+    createBall(game, right, left, maxY);
+    getch();
     return true;
 }
 
-void createBarrita(WINDOW* game, int right, int left, int maxY) {
+void createBarrita(WINDOW* game, int right, int left, int maxY) { 
      start_color();
      init_pair(5, COLOR_WHITE, COLOR_WHITE);
-     for (int j = right; j < left; j++) {
-         for (int i = maxY-2; i < maxY-1; i++) {
-               attron(COLOR_PAIR(5));
-               mvwaddch(game,i, j, ACS_BOARD);
+     move(maxY-2, 0);
+     clrtoeol();
+     for(int j = right; j < left; j++) {
+        for (int i = maxY-2; i < maxY-1; i++) {
+            attron(COLOR_PAIR(5));
+            mvwaddch(game,i, j, ACS_BOARD);
       }
      }
-      attroff(COLOR_PAIR(4));
+      attroff(COLOR_PAIR(5));
+      wrefresh(game);
 }
 
 void moveBarrita(WINDOW* game, int right, int left, int flag) {
@@ -277,4 +295,11 @@ void moveBarrita(WINDOW* game, int right, int left, int flag) {
     wrefresh(game);
 }
     
-
+void createBall(WINDOW* game, int right, int left, int maxY) {
+    start_color();
+    init_pair(10, COLOR_RED, COLOR_RED);
+    attron(COLOR_PAIR(10));
+    mvwaddch(game, maxY-3, right+3, ACS_BLOCK);
+    mvwaddch(game, maxY-3, right+4, ACS_BLOCK);
+    attroff(COLOR_PAIR(10));
+}
